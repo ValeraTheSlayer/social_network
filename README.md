@@ -1,3 +1,15 @@
-# hw05_final
+# *Yatube*
+### Описание
+Социальная сеть для ведения блогов
+### Технологии
+Python 3.7
 
-[![CI](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/yandex-praktikum/hw05_final/actions/workflows/python-app.yml)
+Django 2.2.6
+### Запуск проекта в dev-режиме
+- Установите и активируйте виртуальное окружение poetry
+- В папке с файлом manage.py выполните команду:
+```
+python manage.py runserver
+```
+### Авторы
+Ежова Марина

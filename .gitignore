@@ -1,7 +1,18 @@
 # Byte-compiled / optimized / DLL files
+
+/.idea
+
+media/
+
 __pycache__/
 *.py[cod]
 *$py.class
+
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
 
 # C extensions
 *.so
@@ -144,9 +155,3 @@ dmypy.json
 .history/
 
 .mypy_cache
-
-# папки со статикой и медиа
-static/
-yatube/posts/static/
-yatube/media/
-
