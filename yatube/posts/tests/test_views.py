@@ -64,17 +64,21 @@ class PostPagesTests(TestCase):
             ('posts:follow_index', 'posts/follow.html', None),
         )
 
+    def setUp(self):
+        cache.clear()
+
     def test_pages_uses_correct_template(self):
         for reverse_name, template, params in self.urls:
             with self.subTest(
-                reverse_name=reverse_name,
-                template=template,
-                params=params,
+                    reverse_name=reverse_name,
+                    template=template,
+                    params=params,
             ):
                 response = self.authorized_client.get(
                     reverse(reverse_name, args=params),
                 )
                 self.assertTemplateUsed(response, template)
+                cache.clear()
 
     def test_index_show_correct_context(self):
         response = self.guest_client.get(reverse('posts:index'))
@@ -89,8 +93,8 @@ class PostPagesTests(TestCase):
             reverse('posts:group_list', args=(self.group.slug,)),
         )
         expected = Post.objects.filter(group_id=self.group.id)[
-            : settings.POST_AMOUNT
-        ]
+                   : settings.POST_AMOUNT
+                   ]
         self.assertEqual(
             response.context['page_obj'][: settings.POST_AMOUNT],
             list(expected),
@@ -104,8 +108,8 @@ class PostPagesTests(TestCase):
             ),
         )
         expected = Post.objects.filter(author_id=self.user.id)[
-            : settings.POST_AMOUNT
-        ]
+                   : settings.POST_AMOUNT
+                   ]
         self.assertEqual(
             response.context['page_obj'][: settings.POST_AMOUNT],
             list(expected),
@@ -314,6 +318,9 @@ class PostUploadImageTests(TestCase):
             (reverse('posts:profile', args=(cls.user.username,))),
         )
 
+    def setUp(self):
+        cache.clear()
+
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
@@ -326,6 +333,7 @@ class PostUploadImageTests(TestCase):
                 self.assertEqual(
                     response.context['page_obj'][0].image, self.post.image
                 )
+                cache.clear()
 
     def test_show_image_in_context_post_detail(self):
         response = self.guest_client.get(

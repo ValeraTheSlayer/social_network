@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import cache_page
 
 from core.utils import paginate
 from posts.forms import CommentForm, PostForm
@@ -10,6 +11,7 @@ from posts.models import Comment, Follow, Group, Post
 User = get_user_model()
 
 
+@cache_page(20, key_prefix='index_page')
 def index(request):
     posts = Post.objects.select_related('group', 'author')
     page_obj = paginate(request, posts, settings.POST_AMOUNT)
@@ -36,6 +38,7 @@ def group_posts(request, slug):
     )
 
 
+@cache_page(20, key_prefix='profile_page')
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     posts = author.posts.select_related('author', 'group')
@@ -123,7 +126,7 @@ def follow_index(request):
     posts = Post.objects.filter(
         author_id__in=user.values_list('author_id', flat=True)
     )
-    page_obj = paginate(request, posts, settings.POST_AMOUNT,)
+    page_obj = paginate(request, posts, settings.POST_AMOUNT, )
     return render(
         request,
         'posts/follow.html',

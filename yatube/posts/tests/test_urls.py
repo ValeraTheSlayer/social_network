@@ -3,7 +3,7 @@ from http import HTTPStatus
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from mixer.backend.django import mixer
-
+from django.core.cache import cache
 from posts.models import Post
 
 User = get_user_model()
@@ -34,6 +34,9 @@ class PostURLTests(TestCase):
             ('/create/', 'posts/create_post.html'),
             (f'/posts/{cls.post.id}/edit/', 'posts/create_post.html'),
         )
+
+    def setUp(self):
+        cache.clear()
 
     def test_public_urls_exist_at_desired_location(self):
         for url, template in self.public_url:
@@ -72,6 +75,7 @@ class PostURLTests(TestCase):
             with self.subTest(template=template):
                 response = self.guest_client.get(url)
                 self.assertTemplateUsed(response, template)
+                cache.clear()
 
     def test_private_urls_uses_correct_template(self):
         for url, template in self.private_url:
