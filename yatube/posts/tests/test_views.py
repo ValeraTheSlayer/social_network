@@ -70,9 +70,9 @@ class PostPagesTests(TestCase):
     def test_pages_uses_correct_template(self):
         for reverse_name, template, params in self.urls:
             with self.subTest(
-                reverse_name=reverse_name,
-                template=template,
-                params=params,
+                    reverse_name=reverse_name,
+                    template=template,
+                    params=params,
             ):
                 response = self.authorized_client.get(
                     reverse(reverse_name, args=params),
@@ -93,8 +93,8 @@ class PostPagesTests(TestCase):
             reverse('posts:group_list', args=(self.group.slug,)),
         )
         expected = Post.objects.filter(group_id=self.group.id)[
-            : settings.POST_AMOUNT
-        ]
+                   : settings.POST_AMOUNT
+                   ]
         self.assertEqual(
             response.context['page_obj'][: settings.POST_AMOUNT],
             list(expected),
@@ -108,8 +108,8 @@ class PostPagesTests(TestCase):
             ),
         )
         expected = Post.objects.filter(author_id=self.user.id)[
-            : settings.POST_AMOUNT
-        ]
+                   : settings.POST_AMOUNT
+                   ]
         self.assertEqual(
             response.context['page_obj'][: settings.POST_AMOUNT],
             list(expected),
@@ -242,6 +242,9 @@ class PaginatorViewsTest(TestCase):
                 group=cls.group,
             )
 
+    def setUp(self):
+        cache.clear()
+
     def test_first_page_contains_ten_records(self):
         posts_per_page = {
             reverse('posts:index'): consts.PAGINATOR_FIRST_PAGE,
@@ -261,6 +264,7 @@ class PaginatorViewsTest(TestCase):
                     len(response.context['page_obj']),
                     paginator_posts,
                 )
+                cache.clear()
 
     def test_second_page_contains_three_records(self):
         posts_per_page = {
@@ -280,7 +284,7 @@ class PaginatorViewsTest(TestCase):
                     len(response.context['page_obj']),
                     paginator_posts,
                 )
-
+                cache.clear()
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
