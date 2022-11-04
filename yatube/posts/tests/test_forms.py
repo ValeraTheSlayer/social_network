@@ -167,7 +167,8 @@ class PostFormTest(TestCase):
             follow=True,
         )
         self.assertRedirects(
-            response, reverse('posts:post_detail', args=(self.post.id,)),
+            response,
+            reverse('posts:post_detail', args=(self.post.id,)),
         )
         self.assertEqual(Comment.objects.count(), 1)
         comment = Comment.objects.get(id=1)
@@ -193,7 +194,9 @@ class PostFormTest(TestCase):
             b'\x0A\x00\x3B'
         )
         uploaded = SimpleUploadedFile(
-            name='small.gif', content=small_gif, content_type='image/gif',
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif',
         )
         response = self.authorized_client.post(
             reverse('posts:post_create'),
@@ -205,7 +208,8 @@ class PostFormTest(TestCase):
             follow=True,
         )
         self.assertRedirects(
-            response, reverse('posts:profile', args=(self.user.username,)),
+            response,
+            reverse('posts:profile', args=(self.user.username,)),
         )
         self.assertEqual(Post.objects.count(), 1)
         post = Post.objects.get(id=1)

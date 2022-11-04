@@ -126,13 +126,17 @@ def follow_index(request):
     posts = Post.objects.filter(
         author_id__in=user.values_list('author_id', flat=True)
     )
-    page_obj = paginate(request, posts, settings.POST_AMOUNT, )
+    page_obj = paginate(
+        request,
+        posts,
+        settings.POST_AMOUNT,
+    )
     return render(
         request,
         'posts/follow.html',
         {
             'page_obj': page_obj,
-        }
+        },
     )
 
 
