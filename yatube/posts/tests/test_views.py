@@ -93,8 +93,7 @@ class PostPagesTests(TestCase):
             reverse('posts:group_list', args=(self.group.slug,)),
         )
         expected = Post.objects.filter(group_id=self.group.id)[
-                   : settings.POST_AMOUNT
-                   ]
+                   : settings.POST_AMOUNT]
         self.assertEqual(
             response.context['page_obj'][: settings.POST_AMOUNT],
             list(expected),
@@ -108,8 +107,7 @@ class PostPagesTests(TestCase):
             ),
         )
         expected = Post.objects.filter(author_id=self.user.id)[
-                   : settings.POST_AMOUNT
-                   ]
+                   : settings.POST_AMOUNT]
         self.assertEqual(
             response.context['page_obj'][: settings.POST_AMOUNT],
             list(expected),
@@ -285,6 +283,7 @@ class PaginatorViewsTest(TestCase):
                     paginator_posts,
                 )
                 cache.clear()
+
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
