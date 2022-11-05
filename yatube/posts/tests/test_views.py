@@ -78,7 +78,6 @@ class PostPagesTests(TestCase):
                     reverse(reverse_name, args=params),
                 )
                 self.assertTemplateUsed(response, template)
-                cache.clear()
 
     def test_index_show_correct_context(self):
         response = self.guest_client.get(reverse('posts:index'))
@@ -264,7 +263,6 @@ class PaginatorViewsTest(TestCase):
                     len(response.context['page_obj']),
                     paginator_posts,
                 )
-                cache.clear()
 
     def test_second_page_contains_three_records(self):
         posts_per_page = {
@@ -340,7 +338,6 @@ class PostUploadImageTests(TestCase):
                 self.assertEqual(
                     response.context['page_obj'][0].image, self.post.image
                 )
-                cache.clear()
 
     def test_show_image_in_context_post_detail(self):
         response = self.guest_client.get(

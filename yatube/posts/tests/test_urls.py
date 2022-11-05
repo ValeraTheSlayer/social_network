@@ -76,7 +76,6 @@ class PostURLTests(TestCase):
             with self.subTest(template=template):
                 response = self.guest_client.get(url)
                 self.assertTemplateUsed(response, template)
-                cache.clear()
 
     def test_private_urls_uses_correct_template(self):
         for url, template in self.private_url:
