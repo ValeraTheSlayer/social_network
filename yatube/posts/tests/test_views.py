@@ -81,9 +81,9 @@ class PostPagesTests(TestCase):
 
     def test_index_show_correct_context(self):
         response = self.guest_client.get(reverse('posts:index'))
-        expected = Post.objects.all()[: settings.POST_AMOUNT]
+        expected = Post.objects.all()[: settings.PAGE_SIZE]
         self.assertEqual(
-            response.context['page_obj'][: settings.POST_AMOUNT],
+            response.context['page_obj'][: settings.PAGE_SIZE],
             list(expected),
         )
 
@@ -92,10 +92,10 @@ class PostPagesTests(TestCase):
             reverse('posts:group_list', args=(self.group.slug,)),
         )
         expected = Post.objects.filter(group_id=self.group.id)[
-            : settings.POST_AMOUNT
+            : settings.PAGE_SIZE
         ]
         self.assertEqual(
-            response.context['page_obj'][: settings.POST_AMOUNT],
+            response.context['page_obj'][: settings.PAGE_SIZE],
             list(expected),
         )
 
@@ -107,10 +107,10 @@ class PostPagesTests(TestCase):
             ),
         )
         expected = Post.objects.filter(author_id=self.user.id)[
-            : settings.POST_AMOUNT
+            : settings.PAGE_SIZE
         ]
         self.assertEqual(
-            response.context['page_obj'][: settings.POST_AMOUNT],
+            response.context['page_obj'][: settings.PAGE_SIZE],
             list(expected),
         )
 
@@ -246,15 +246,15 @@ class PaginatorViewsTest(TestCase):
 
     def test_first_page_contains_ten_records(self):
         posts_per_page = {
-            reverse('posts:index'): consts.PAGINATOR_FIRST_PAGE,
+            reverse('posts:index'): settings.PAGE_SIZE,
             reverse(
                 'posts:group_list',
                 args=(self.group.slug,),
-            ): consts.PAGINATOR_FIRST_PAGE,
+            ): settings.PAGE_SIZE,
             reverse(
                 'posts:profile',
                 args=(self.user.username,),
-            ): consts.PAGINATOR_FIRST_PAGE,
+            ): settings.PAGE_SIZE,
         }
         for reverse_name, paginator_posts in posts_per_page.items():
             with self.subTest(reverse_name=reverse_name):
