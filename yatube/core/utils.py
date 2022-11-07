@@ -6,4 +6,4 @@ def paginate(request, queryset, pagesize):
 
 
 def truncatechars(chars: str, trim: int):
-    return chars[:trim] + '…' if len(chars) > trim else chars
+    return chars[:trim] + '...' if len(chars) > trim else chars
