@@ -92,8 +92,6 @@ LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
-USE_I18N = False
-
 USE_L10N = True
 
 USE_TZ = True
@@ -116,6 +114,6 @@ EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
 CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
 
-POST_AMOUNT = 10
+PAGE_SIZE = 10
 
 TRANCATE_CHARS = 15

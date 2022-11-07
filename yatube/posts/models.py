@@ -3,78 +3,56 @@ from django.contrib.auth import get_user_model
 from django.db import models
 
 from core.models import CreatedModel
+from core.utils import truncatechars
 
 User = get_user_model()
 
 
 class Group(models.Model):
-    title = models.CharField('Заголовок', max_length=200)
-    slug = models.SlugField('Ссылка', unique=True)
-    description = models.TextField('Описание')
+    title = models.CharField('заголовок', max_length=200)
+    slug = models.SlugField('ссылка', unique=True)
+    description = models.TextField('описание')
 
     def __str__(self):
-        return (
-            self.title[: settings.TRANCATE_CHARS] + '…'
-            if len(self.title) > settings.TRANCATE_CHARS
-            else self.title
-        )
+        return truncatechars(self.title, settings.TRANCATE_CHARS)
 
 
 class Post(CreatedModel):
-    text = models.TextField(
-        'Текст',
-        help_text='Текст вашего поста',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='Автор',
-    )
     group = models.ForeignKey(
         Group,
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
-        verbose_name='Группа',
-        help_text='Группа, к которой будет относиться пост',
+        verbose_name='группа',
+        help_text='группа, к которой будет относиться пост',
     )
     image = models.ImageField(
-        'Картинка',
+        'картинка',
         upload_to='posts/',
         blank=True,
-        help_text='Загрузите изображение',
+        help_text='загрузите изображение',
     )
 
     class Meta:
-        ordering = ('-pub_date',)
         default_related_name = 'posts'
-        verbose_name = 'Пост'
-        verbose_name_plural = 'Посты'
+        verbose_name = 'пост'
+        verbose_name_plural = 'посты'
+        ordering = ('-pub_date',)
 
     def __str__(self):
-        return (
-            self.text[: settings.TRANCATE_CHARS] + '…'
-            if len(self.text) > settings.TRANCATE_CHARS
-            else self.text
-        )
+        return truncatechars(self.text, settings.TRANCATE_CHARS)
 
 
 class Comment(CreatedModel):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        verbose_name='Пост',
+        verbose_name='пост',
     )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        verbose_name='Автор',
-    )
-    text = models.TextField('Текст', help_text='Текст вашего комментария')
 
     class Meta:
-        ordering = ('-pub_date',)
         default_related_name = 'comments'
+        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.text
@@ -85,13 +63,13 @@ class Follow(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='follower',
-        verbose_name='Фоловер',
+        verbose_name='фоловер',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='following',
-        verbose_name='Автор блога',
+        verbose_name='автор блога',
     )
 
     class Meta:
