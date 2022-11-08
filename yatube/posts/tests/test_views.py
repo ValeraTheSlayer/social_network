@@ -1,17 +1,16 @@
 import shutil
-import tempfile
 
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from mixer.backend.django import mixer
 
 from posts.models import Follow, Post
 from posts.tests import consts
+from posts.tests.common import image
 
 User = get_user_model()
 
@@ -21,9 +20,9 @@ class PostPagesTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='auth')
-        cls.guest_client = Client()
-        cls.authorized_client = Client()
-        cls.authorized_client.force_login(cls.user)
+        cls.anon = Client()
+        cls.auth = Client()
+        cls.auth.force_login(cls.user)
         cls.group = mixer.blend('posts.Group')
         cls.post = Post.objects.create(
             author=cls.user,
@@ -74,48 +73,48 @@ class PostPagesTests(TestCase):
                 template=template,
                 params=params,
             ):
-                response = self.authorized_client.get(
+                response = self.auth.get(
                     reverse(reverse_name, args=params),
                 )
                 self.assertTemplateUsed(response, template)
 
     def test_index_show_correct_context(self):
-        response = self.guest_client.get(reverse('posts:index'))
-        expected = Post.objects.all()[: settings.PAGE_SIZE]
+        response = self.anon.get(reverse('posts:index'))
+        expected = Post.objects.all()[:settings.PAGE_SIZE]
         self.assertEqual(
-            response.context['page_obj'][: settings.PAGE_SIZE],
+            response.context['page_obj'][:settings.PAGE_SIZE],
             list(expected),
         )
 
     def test_group_list_correct_context(self):
-        response = self.guest_client.get(
+        response = self.anon.get(
             reverse('posts:group_list', args=(self.group.slug,)),
         )
         expected = Post.objects.filter(group_id=self.group.id)[
-            : settings.PAGE_SIZE
+            :settings.PAGE_SIZE
         ]
         self.assertEqual(
-            response.context['page_obj'][: settings.PAGE_SIZE],
+            response.context['page_obj'][:settings.PAGE_SIZE],
             list(expected),
         )
 
     def test_profile_correct_context(self):
-        response = self.guest_client.get(
+        response = self.anon.get(
             reverse(
                 'posts:profile',
                 args=(self.user.username,),
             ),
         )
         expected = Post.objects.filter(author_id=self.user.id)[
-            : settings.PAGE_SIZE
+            :settings.PAGE_SIZE
         ]
         self.assertEqual(
-            response.context['page_obj'][: settings.PAGE_SIZE],
+            response.context['page_obj'][:settings.PAGE_SIZE],
             list(expected),
         )
 
     def test_post_detail_correct_context(self):
-        response = self.guest_client.get(
+        response = self.anon.get(
             reverse(
                 'posts:post_detail',
                 args=(self.post.id,),
@@ -132,7 +131,7 @@ class PostPagesTests(TestCase):
         )
 
     def test_post_create_correct_context(self):
-        response = self.authorized_client.get(reverse('posts:post_create'))
+        response = self.auth.get(reverse('posts:post_create'))
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
@@ -143,7 +142,7 @@ class PostPagesTests(TestCase):
                 self.assertIsInstance(form_field, expected)
 
     def test_post_create_edit_correct_context(self):
-        response = self.authorized_client.get(
+        response = self.auth.get(
             reverse(
                 'posts:post_edit',
                 args=(self.post.id,),
@@ -172,7 +171,7 @@ class PostPagesTests(TestCase):
         )
         for value in form_fields:
             with self.subTest(value=value):
-                response = self.authorized_client.get(value)
+                response = self.auth.get(value)
                 form_field = response.context['page_obj']
                 self.assertIn(
                     Post.objects.get(group=self.post.group), form_field
@@ -187,40 +186,40 @@ class PostPagesTests(TestCase):
         }
         for value, expected in form_fields.items():
             with self.subTest(value=value):
-                response = self.authorized_client.get(value)
+                response = self.auth.get(value)
                 form_field = response.context['page_obj']
                 self.assertNotIn(expected, form_field)
 
     def test_new_post_of_following_author_appears_in_follower_list(self):
         follower = User.objects.create_user(username='follower')
-        authorized_client = Client()
-        authorized_client.force_login(follower)
+        auth_follower = Client()
+        auth_follower.force_login(follower)
         Follow.objects.create(user=follower, author=self.user)
-        response_1 = authorized_client.get(reverse('posts:index'))
+        response_1 = auth_follower.get(reverse('posts:index'))
         post = response_1.context['page_obj'][0]
-        response_2 = authorized_client.get(reverse('posts:follow_index'))
+        response_2 = auth_follower.get(reverse('posts:follow_index'))
         self.assertIn(post, response_2.context['page_obj'])
 
     def test_new_post_of_unfollowing_author_not_appears_in_follower_list(self):
         follower = User.objects.create_user(username='follower')
-        authorized_client = Client()
-        authorized_client.force_login(follower)
-        response_1 = authorized_client.get(reverse('posts:index'))
+        auth_follower = Client()
+        auth_follower.force_login(follower)
+        response_1 = auth_follower.get(reverse('posts:index'))
         post = response_1.context['page_obj'][0]
-        response_2 = authorized_client.get(reverse('posts:follow_index'))
+        response_2 = auth_follower.get(reverse('posts:follow_index'))
         self.assertNotIn(post, response_2.context['page_obj'])
 
     def test_authorized_user_can_follow_other_users(self):
         follower = User.objects.create_user(username='follower')
-        authorized_client = Client()
-        authorized_client.force_login(follower)
+        auth_follower = Client()
+        auth_follower.force_login(follower)
         Follow.objects.create(user=follower, author=self.user)
         self.assertTrue(self.user.following.exists())
 
     def test_authorized_user_can_unfollow_other_users(self):
         follower = User.objects.create_user(username='follower')
-        authorized_client = Client()
-        authorized_client.force_login(follower)
+        auth_follower = Client()
+        auth_follower.force_login(follower)
         Follow.objects.create(user=follower, author=self.user)
         self.assertTrue(self.user.following.exists())
         Follow.objects.get(user=follower, author=self.user).delete()
@@ -232,7 +231,7 @@ class PaginatorViewsTest(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='auth')
-        cls.guest_client = Client()
+        cls.anon = Client()
         cls.group = mixer.blend('posts.Group')
         for post_number in range(consts.POSTS_AMOUNT):
             cls.post = Post.objects.create(
@@ -258,7 +257,7 @@ class PaginatorViewsTest(TestCase):
         }
         for reverse_name, paginator_posts in posts_per_page.items():
             with self.subTest(reverse_name=reverse_name):
-                response = self.guest_client.get(reverse_name)
+                response = self.anon.get(reverse_name)
                 self.assertEqual(
                     len(response.context['page_obj']),
                     paginator_posts,
@@ -277,7 +276,7 @@ class PaginatorViewsTest(TestCase):
         }
         for reverse_name, paginator_posts in posts_per_page.items():
             with self.subTest(reverse_name=reverse_name):
-                response = self.guest_client.get(reverse_name)
+                response = self.anon.get(reverse_name)
                 self.assertEqual(
                     len(response.context['page_obj']),
                     paginator_posts,
@@ -285,37 +284,21 @@ class PaginatorViewsTest(TestCase):
                 cache.clear()
 
 
-TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
-
-
-@override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
+@override_settings(MEDIA_ROOT=settings.MEDIA_ROOT)
 class PostUploadImageTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='auth')
-        cls.guest_client = Client()
-        cls.authorized_client = Client()
-        cls.authorized_client.force_login(cls.user)
+        cls.anon = Client()
+        cls.auth = Client()
+        cls.auth.force_login(cls.user)
         cls.group = mixer.blend('posts.Group')
-        cls.small_gif = (
-            b'\x47\x49\x46\x38\x39\x61\x02\x00'
-            b'\x01\x00\x80\x00\x00\x00\x00\x00'
-            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-            b'\x0A\x00\x3B'
-        )
-        cls.uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=cls.small_gif,
-            content_type='image/gif',
-        )
         cls.post = Post.objects.create(
             author=cls.user,
             text='Тестовый пост',
             group=cls.group,
-            image=cls.uploaded,
+            image=image(),
         )
         cls.image_urls = (
             (reverse('posts:index')),
@@ -329,18 +312,18 @@ class PostUploadImageTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
+        shutil.rmtree(settings.MEDIA_ROOT, ignore_errors=True)
 
     def test_show_image_in_context_pages(self):
         for url in self.image_urls:
             with self.subTest(url):
-                response = self.guest_client.get(url)
+                response = self.anon.get(url)
                 self.assertEqual(
                     response.context['page_obj'][0].image, self.post.image
                 )
 
     def test_show_image_in_context_post_detail(self):
-        response = self.guest_client.get(
+        response = self.anon.get(
             reverse(
                 'posts:post_detail',
                 args=(self.post.id,),
@@ -349,10 +332,10 @@ class PostUploadImageTests(TestCase):
         self.assertEqual(response.context['post'].image, self.post.image)
 
     def test_check_cache(self):
-        response = self.guest_client.get(reverse('posts:index'))
+        response = self.anon.get(reverse('posts:index'))
         Post.objects.get(id=1).delete()
-        response2 = self.guest_client.get(reverse('posts:index'))
+        response2 = self.anon.get(reverse('posts:index'))
         self.assertEqual(response.content, response2.content)
         cache.clear()
-        response3 = self.guest_client.get(reverse('posts:index'))
+        response3 = self.anon.get(reverse('posts:index'))
         self.assertNotEqual(response.content, response3.content)

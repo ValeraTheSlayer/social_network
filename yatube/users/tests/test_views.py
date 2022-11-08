@@ -10,9 +10,9 @@ class UserPagesTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='Noname')
-        cls.guest_client = Client()
-        cls.authorized_client = Client()
-        cls.authorized_client.force_login(cls.user)
+        cls.anon = Client()
+        cls.auth = Client()
+        cls.auth.force_login(cls.user)
 
     def test_pages_uses_correct_template(self):
         templates_pages_names = {
@@ -22,7 +22,7 @@ class UserPagesTests(TestCase):
 
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
-                response = self.guest_client.get(reverse_name)
+                response = self.anon.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
     def test_page_password_change_uses_correct_template(self):
@@ -34,5 +34,5 @@ class UserPagesTests(TestCase):
 
         for reverse_name, template in templates_pages_names.items():
             with self.subTest(reverse_name=reverse_name):
-                response = self.authorized_client.get(reverse_name)
+                response = self.auth.get(reverse_name)
                 self.assertTemplateUsed(response, template)

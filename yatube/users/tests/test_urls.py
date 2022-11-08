@@ -8,12 +8,12 @@ User = get_user_model()
 
 class UserURLTests(TestCase):
     def setUp(self):
-        self.guest_client = Client()
+        self.anon = Client()
 
     def test_signup_url_exists_at_desired_location(self):
-        response = self.guest_client.get('/auth/signup/')
-        self.assertEqual(response.status_code, HTTPStatus.OK.value)
+        response = self.anon.get('/auth/signup/')
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_urls_uses_correct_template(self):
-        response = self.guest_client.get('/auth/signup/')
+        response = self.anon.get('/auth/signup/')
         self.assertTemplateUsed(response, 'users/signup.html')

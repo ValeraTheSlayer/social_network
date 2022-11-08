@@ -14,11 +14,11 @@ class CreationFormTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.form = CreationForm()
-        cls.guest_client = Client()
+        cls.anon = Client()
 
     def test_signup(self):
         self.assertEqual(User.objects.count(), 0)
-        response = self.guest_client.post(
+        response = self.anon.post(
             reverse('users:signup'),
             data={
                 'first_name': 'test_first_name',

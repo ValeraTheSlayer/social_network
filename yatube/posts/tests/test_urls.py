@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.views import redirect_to_login
 from django.core.cache import cache
 from django.test import Client, TestCase
 from mixer.backend.django import mixer
@@ -14,13 +15,18 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='auth')
-        cls.guest_client = Client()
-        cls.authorized_client = Client()
-        cls.authorized_client.force_login(cls.user)
+        cls.user, cls.author_user = mixer.cycle(2).blend(
+            User,
+            username=(name for name in ('user', 'author-user')),
+        )
+        cls.anon = Client()
+        cls.auth = Client()
+        cls.auth.force_login(cls.user)
+        cls.auth_author = Client()
+        cls.auth_author.force_login(cls.author_user)
         cls.group = mixer.blend('posts.Group')
         cls.post = Post.objects.create(
-            author=cls.user,
+            author=cls.author_user,
             text='Тестовый пост',
         )
         cls.post_url = f'/posts/{cls.post.id}'
@@ -42,43 +48,55 @@ class PostURLTests(TestCase):
     def test_public_urls_exist_at_desired_location(self):
         for url, template in self.public_url:
             with self.subTest(template=template):
-                response = self.guest_client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK.value)
+                response = self.anon.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_private_url_exists_at_desired_location(self):
         for url, template in self.private_url:
             with self.subTest(template=template):
-                response = self.authorized_client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK.value)
+                response = self.auth_author.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def unexisting_page_exist_at_desired_location(self):
-        response = self.guest_client.get('/unexisting_page/')
-        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND.value)
+        response = self.anon.get('/unexisting_page/')
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def unexisting_page_uses_correct_template(self):
-        response = self.guest_client.get('/unexisting_page/')
+        response = self.anon.get('/unexisting_page/')
         self.assertTemplateUsed(response, 'posts/core/404.html')
 
     def test_create_edit_post_url_redirect_anonymous_on_admin_login(self):
         create_edit_post = {
-            '/create/': '/auth/login/?next=/create/',
-            f'/posts/{self.post.id}/edit/': (
-                f'/auth/login/?next=/posts/{self.post.id}/edit/'
-            ),
+            '/create/': redirect_to_login(
+                '/create/',
+                login_url='/auth/login/',
+                redirect_field_name='next',
+            ).url,
+            f'/posts/{self.post.id}/edit/': redirect_to_login(
+                f'/posts/{self.post.id}/edit/',
+                login_url='/auth/login/',
+                redirect_field_name='next',
+            ).url,
         }
         for url, redirect in create_edit_post.items():
             with self.subTest(url=url):
-                response = self.guest_client.get(url, follow=True)
+                response = self.anon.get(url, follow=True)
                 self.assertRedirects(response, redirect)
+
+    def test_edit_post_url_redirect_not_author_on_post_detail(self):
+        self.assertRedirects(
+            self.auth.get(f'/posts/{self.post.id}/edit/', follow=True),
+            f'/posts/{self.post.id}/',
+        )
 
     def test_public_urls_uses_correct_template(self):
         for url, template in self.public_url:
             with self.subTest(template=template):
-                response = self.guest_client.get(url)
+                response = self.anon.get(url)
                 self.assertTemplateUsed(response, template)
 
     def test_private_urls_uses_correct_template(self):
         for url, template in self.private_url:
             with self.subTest(template=template):
-                response = self.authorized_client.get(url)
+                response = self.auth_author.get(url)
                 self.assertTemplateUsed(response, template)

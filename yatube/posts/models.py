@@ -14,7 +14,7 @@ class Group(models.Model):
     description = models.TextField('описание')
 
     def __str__(self):
-        return truncatechars(self.title, settings.TRANCATE_CHARS)
+        return truncatechars(self.title, settings.TRUNCATE_CHARS)
 
 
 class Post(CreatedModel):
@@ -33,14 +33,13 @@ class Post(CreatedModel):
         help_text='загрузите изображение',
     )
 
-    class Meta:
+    class Meta(CreatedModel.Meta):
         default_related_name = 'posts'
         verbose_name = 'пост'
         verbose_name_plural = 'посты'
-        ordering = ('-pub_date',)
 
     def __str__(self):
-        return truncatechars(self.text, settings.TRANCATE_CHARS)
+        return truncatechars(self.text, settings.TRUNCATE_CHARS)
 
 
 class Comment(CreatedModel):
@@ -50,9 +49,8 @@ class Comment(CreatedModel):
         verbose_name='пост',
     )
 
-    class Meta:
+    class Meta(CreatedModel.Meta):
         default_related_name = 'comments'
-        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.text

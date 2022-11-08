@@ -116,4 +116,4 @@ CSRF_FAILURE_VIEW = 'core.views.csrf_failure'
 
 PAGE_SIZE = 10
 
-TRANCATE_CHARS = 15
+TRUNCATE_CHARS = 15

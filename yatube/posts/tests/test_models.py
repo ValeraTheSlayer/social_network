@@ -14,7 +14,7 @@ class PostModelTest(TestCase):
 
     def test_models_have_correct_object_names(self):
         self.assertEqual(
-            self.post.text[: settings.TRANCATE_CHARS] + '...',
+            self.post.text[:settings.TRUNCATE_CHARS] + '...',
             str(self.post),
         )
 
@@ -27,6 +27,6 @@ class GroupModelTest(TestCase):
 
     def test_models_have_correct_object_names(self):
         self.assertEqual(
-            self.group.title[: settings.TRANCATE_CHARS] + '...',
+            self.group.title[:settings.TRUNCATE_CHARS] + '...',
             str(self.group),
         )

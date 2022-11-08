@@ -20,3 +20,4 @@ run:
 migrate:
 	$(MANAGE)  makemigrations
 	$(MANAGE)  migrate
+
