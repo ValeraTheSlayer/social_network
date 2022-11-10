@@ -23,6 +23,9 @@ class PostPagesTests(TestCase):
         cls.anon = Client()
         cls.auth = Client()
         cls.auth.force_login(cls.user)
+        cls.follower = User.objects.create_user(username='follower')
+        cls.auth_follower = Client()
+        cls.auth_follower.force_login(cls.follower)
         cls.group = mixer.blend('posts.Group')
         cls.post = Post.objects.create(
             author=cls.user,
@@ -191,38 +194,26 @@ class PostPagesTests(TestCase):
                 self.assertNotIn(expected, form_field)
 
     def test_new_post_of_following_author_appears_in_follower_list(self):
-        follower = User.objects.create_user(username='follower')
-        auth_follower = Client()
-        auth_follower.force_login(follower)
-        Follow.objects.create(user=follower, author=self.user)
-        response_1 = auth_follower.get(reverse('posts:index'))
+        Follow.objects.create(user=self.follower, author=self.user)
+        response_1 = self.auth_follower.get(reverse('posts:index'))
         post = response_1.context['page_obj'][0]
-        response_2 = auth_follower.get(reverse('posts:follow_index'))
+        response_2 = self.auth_follower.get(reverse('posts:follow_index'))
         self.assertIn(post, response_2.context['page_obj'])
 
     def test_new_post_of_unfollowing_author_not_appears_in_follower_list(self):
-        follower = User.objects.create_user(username='follower')
-        auth_follower = Client()
-        auth_follower.force_login(follower)
-        response_1 = auth_follower.get(reverse('posts:index'))
+        response_1 = self.auth_follower.get(reverse('posts:index'))
         post = response_1.context['page_obj'][0]
-        response_2 = auth_follower.get(reverse('posts:follow_index'))
+        response_2 = self.auth_follower.get(reverse('posts:follow_index'))
         self.assertNotIn(post, response_2.context['page_obj'])
 
     def test_authorized_user_can_follow_other_users(self):
-        follower = User.objects.create_user(username='follower')
-        auth_follower = Client()
-        auth_follower.force_login(follower)
-        Follow.objects.create(user=follower, author=self.user)
+        Follow.objects.create(user=self.follower, author=self.user)
         self.assertTrue(self.user.following.exists())
 
     def test_authorized_user_can_unfollow_other_users(self):
-        follower = User.objects.create_user(username='follower')
-        auth_follower = Client()
-        auth_follower.force_login(follower)
-        Follow.objects.create(user=follower, author=self.user)
+        Follow.objects.create(user=self.follower, author=self.user)
         self.assertTrue(self.user.following.exists())
-        Follow.objects.get(user=follower, author=self.user).delete()
+        Follow.objects.get(user=self.follower, author=self.user).delete()
         self.assertFalse(self.user.following.exists())
 
 

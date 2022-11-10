@@ -2,7 +2,6 @@ import shutil
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.views import redirect_to_login
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from mixer.backend.django import mixer
@@ -53,39 +52,13 @@ class PostFormTest(TestCase):
         self.assertEqual(post.group, None)
         self.assertEqual(post.author, self.user)
 
-    def test_create_post_with_group_assignment(self):
-        response = self.auth.post(
-            reverse('posts:post_create'),
-            {
-                'text': 'Тестовый пост',
-                'group': self.group.id,
-            },
-            follow=True,
-        )
-        self.assertRedirects(
-            response,
-            reverse(
-                'posts:profile',
-                args=(self.user.username,),
-            ),
-        )
-        self.assertEqual(Post.objects.count(), 1)
-        post = Post.objects.get()
-        self.assertEqual(post.text, 'Тестовый пост')
-        self.assertEqual(post.group.id, self.group.id)
-        self.assertEqual(post.author, self.user)
-
     def test_anon_cant_post(self):
-        response = self.anon.post(
+        self.anon.post(
             reverse('posts:post_create'),
             {
                 'text': 'Тестовый пост',
             },
             follow=True,
-        )
-        self.assertRedirects(
-            response,
-            '/auth/login/?next=/create/',
         )
         self.assertEqual(Post.objects.count(), 0)
 
@@ -138,31 +111,23 @@ class PostFormTest(TestCase):
             text='Тестовый текст',
             author=self.author_user,
         )
-        response = self.anon.post(
+        self.anon.post(
             reverse('posts:post_edit', args=(self.post.id,)),
             {
                 'text': 'Изменяем пост',
             },
             follow=True,
         )
-        self.assertRedirects(
-            response,
-            redirect_to_login(
-                f'/posts/{self.post.id}/edit/',
-                login_url='/auth/login/',
-                redirect_field_name='next',
-            ).url,
-        )
         self.assertEqual(Post.objects.count(), 1)
         post = Post.objects.get()
         self.assertEqual(post.text, 'Тестовый текст')
         self.assertEqual(post.group, None)
-        self.assertEqual(post.author.username, 'author-user')
+        self.assertEqual(self.author_user.username, 'author-user')
 
-    def only_auth_can_comment(self):
+    def auth_can_comment(self):
         response = self.auth.post(
             reverse('posts:add_comment', args=(self.post.id,)),
-            data={'text': 'Тестовый коммент'},
+            {'text': 'Тестовый коммент'},
             follow=True,
         )
         self.assertRedirects(
@@ -197,6 +162,6 @@ class PostFormTest(TestCase):
         )
         self.assertEqual(Post.objects.count(), 1)
         post = Post.objects.get()
+        self.assertEqual(post.group, self.group)
         self.assertEqual(post.text, 'Тестовый пост')
-        self.assertEqual(post.group.id, self.group.id)
         self.assertEqual(post.image, 'posts/giffy.gif')

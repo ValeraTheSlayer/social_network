@@ -44,21 +44,6 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    if request.user.is_authenticated:
-        following = author.following.exists()
-        return render(
-            request,
-            'posts/profile.html',
-            {
-                'author': author,
-                'page_obj': paginate(
-                    request,
-                    author.posts.select_related('author', 'group'),
-                    settings.PAGE_SIZE,
-                ),
-                'following': following,
-            },
-        )
     return render(
         request,
         'posts/profile.html',
@@ -69,19 +54,20 @@ def profile(request, username):
                 author.posts.select_related('author', 'group'),
                 settings.PAGE_SIZE,
             ),
+            'following': request.user.is_authenticated
+            and author.following.exists(),
         },
     )
 
 
 def post_detail(request, post_id):
-    form = CommentForm()
     post = get_object_or_404(Post, id=post_id)
     return render(
         request,
         'posts/post_detail.html',
         {
             'post': post,
-            'form': form,
+            'form': CommentForm(),
         },
     )
 
@@ -100,10 +86,10 @@ def post_create(request):
 
 @login_required
 def post_edit(request, post_id):
-    if request.user != Post.objects.get(id=post_id).author:
-        return redirect('posts:post_detail', post_id)
-
     post = get_object_or_404(Post, id=post_id)
+
+    if request.user != post.author:
+        return redirect('posts:post_detail', post_id)
 
     form = PostForm(
         request.POST or None,
@@ -162,6 +148,5 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username):
     author = User.objects.get(username=username)
-    follow = get_object_or_404(Follow, user_id=request.user, author=author)
-    follow.delete()
+    get_object_or_404(Follow, user_id=request.user, author=author).delete()
     return redirect('posts:profile', request.user)

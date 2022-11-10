@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.views import redirect_to_login
 from django.core.cache import cache
 from django.test import Client, TestCase
+from django.urls import reverse
 from mixer.backend.django import mixer
 
 from posts.models import Post
@@ -68,14 +69,13 @@ class PostURLTests(TestCase):
     def test_create_edit_post_url_redirect_anonymous_on_admin_login(self):
         create_edit_post = {
             '/create/': redirect_to_login(
-                '/create/',
-                login_url='/auth/login/',
-                redirect_field_name='next',
+                reverse('posts:post_create'),
             ).url,
             f'/posts/{self.post.id}/edit/': redirect_to_login(
-                f'/posts/{self.post.id}/edit/',
-                login_url='/auth/login/',
-                redirect_field_name='next',
+                reverse(
+                    'posts:post_edit',
+                    args=(self.post.id,),
+                ),
             ).url,
         }
         for url, redirect in create_edit_post.items():

@@ -1,5 +1,6 @@
 POETRY = poetry run
 WORKDIR = yatube
+TEMPLATES-DIR = $(WORKDIR)/templates
 MANAGE = $(POETRY) python $(WORKDIR)/manage.py
 
 style:
@@ -21,3 +22,5 @@ migrate:
 	$(MANAGE)  makemigrations
 	$(MANAGE)  migrate
 
+unittest:
+	$(MANAGE) test yatube
