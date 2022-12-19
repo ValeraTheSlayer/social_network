@@ -2,7 +2,7 @@
 name = "yatube-project"
 version = "0.1.0"
 description = ""
-authors = ["Марина Ежова <marickyarick@gmail.com>"]
+authors = ["Ежов Валерий <ezhov.fzzz@gmail.com>"]
 readme = "README.md"
 packages = [{include = "yatube_project"}]
 

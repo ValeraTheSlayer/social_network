@@ -12,4 +12,4 @@ Django 2.2.6
 python manage.py runserver
 ```
 ### Авторы
-Ежова Марина
+Ежов Валерий
